@@ -21,9 +21,16 @@ public static class RouteEndpoints
         {
             if (km <= 0 || km > 100) return Results.BadRequest(new { error = "km must be between 1 and 100" });
 
-            var req = new RoundTripRequest { Lat = lat, Lng = lng, Km = km, Mode = mode, Seed = seed };
-            var res = await service.GetRoundTripAsync(req, ct);
-            return Results.Ok(res);
+            try
+            {
+                var req = new RoundTripRequest { Lat = lat, Lng = lng, Km = km, Mode = mode, Seed = seed };
+                var res = await service.GetRoundTripAsync(req, ct);
+                return Results.Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(ex.Message);
+            }
         });
 
         return app;

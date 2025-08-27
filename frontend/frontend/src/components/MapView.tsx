@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import L, { LatLng } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { fetchRoundTrip, exportGpx } from '../lib/api'
+import { fetchRoundTrip } from '../lib/api'
 
 // Fix default marker icons in Vite
 // @ts-ignore
@@ -116,22 +116,15 @@ export default function MapView({ km, mode, seed }: Props) {
     }
   }
 
-  function downloadGpx() {
-    if (!routeRef.current) return alert('Ingen rutt att exportera')
-    const latlngs = (routeRef.current.getLatLngs() as L.LatLng[]).map((ll: L.LatLng) => [ll.lat, ll.lng]) as [number, number][]
-    exportGpx(latlngs, `${km}km-${mode}`)
-  }
-
   return (
-    <div>
-      <div ref={containerRef} style={{ height: 400, width: '100%' }} />
-      <div style={{ marginTop: 10 }}>
-        <button onClick={useLocation}>Använd min plats</button>
-        <button onClick={generate} style={{ marginLeft: 8 }}>Generera rutt</button>
-        <button onClick={downloadGpx} style={{ marginLeft: 8 }}>Exportera GPX</button>
-        {info && <span style={{ marginLeft: 10 }}>{info}</span>}
-        {error && <div style={{ color: 'red' }}>{error}</div>}
-      </div>
+    <div style={{ height: '100%', width: '100%', position: 'relative' }}>
+        <div ref={containerRef} className="map" />
+        <div style={{ position: 'absolute', bottom: 12, left: 12, zIndex: 1000 }}>
+            <button onClick={useLocation}>Använd min plats</button>
+            <button onClick={generate} style={{ marginLeft: 8 }}>Generera rutt</button>
+            {info && <span style={{ marginLeft: 10 }}>{info}</span>}
+            {error && <div className="error">{error}</div>}
+        </div>
     </div>
   )
 }

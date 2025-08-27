@@ -13,6 +13,8 @@ public sealed class GraphHopperClient(
 {
     public async Task<string> RoundTripRawAsync(RoundTripRequest request, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(options.ApiKey))
+            throw new InvalidOperationException("GraphHopper API key is not configured");
         if (request.Km <= 0 || request.Km > 100) throw new ArgumentOutOfRangeException(nameof(request.Km));
         var profile = request.Mode?.ToLowerInvariant() == "bike" ? "bike" : "foot";
         var key = $"rt:{request.Lat:F5}:{request.Lng:F5}:{request.Km:F2}:{profile}:{(request.Seed?.ToString() ?? "-")}";

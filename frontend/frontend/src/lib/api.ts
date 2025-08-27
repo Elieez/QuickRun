@@ -11,7 +11,16 @@ export async function fetchRoundTrip(lat: number, lng: number, km: number, mode:
     if (seed !== undefined) url.searchParams.set('seed', String(seed))
 
     const res = await fetch(url.toString().replace(window.location.origin, ''))
-    if (!res.ok) throw new Error(`Roundtrip failed: ${res.status}`)
+    if (!res.ok) {
+        let message = `Roundtrip failed: ${res.status}`
+        try {
+            const err = await res.json()
+            if (err?.detail) message = err.detail
+        } catch {
+            // ignore
+        }
+        throw new Error(message)
+    }
     return await res.json()
 }
 
