@@ -10,8 +10,15 @@ public sealed class RouteService(IGraphHopperClient gh) : IRouteService
     public async Task<RoundTripResponse> GetRoundTripAsync(RoundTripRequest request, CancellationToken cancellationToken)
     {
         var rawJson = await gh.RoundTripRawAsync(request, cancellationToken);
-
         using var doc = JsonDocument.Parse(rawJson);
+        var root = doc.RootElement;
+
+        if (!root.TryGetProperty("paths", out var paths) || paths.GetArrayLength() == 0)
+        {
+            var msg = root.TryGetProperty("message", out var m) ? m.GetString() : "No paths in response";
+            throw new InvalidOperationException($"GraphHopper error: {msg}");
+        }
+
         var path = doc.RootElement.GetProperty("paths")[0];
 
         var distance = path.GetProperty("distance").GetDouble();

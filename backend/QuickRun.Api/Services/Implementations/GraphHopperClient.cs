@@ -19,8 +19,9 @@ public sealed class GraphHopperClient(
         var profile = request.Mode?.ToLowerInvariant() == "bike" ? "bike" : "foot";
         var key = $"rt:{request.Lat:F5}:{request.Lng:F5}:{request.Km:F2}:{profile}:{(request.Seed?.ToString() ?? "-")}";
 
-        if (cache.TryGetValue(key, out string cached)) return cached;
-        
+        var cached = cache.Get<string>(key);
+        if (cached is not null) return cached;
+
         var qs = new List<string>
         {
             $"key={options.ApiKey}",
@@ -40,13 +41,18 @@ public sealed class GraphHopperClient(
         for (int i = 0; i < 2; i++)
         {
             using var response = await client.GetAsync(url, cancellationToken);
-            if(response.IsSuccessStatusCode)
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
             {
-                var json = await response.Content.ReadAsStringAsync(cancellationToken);
-                cache.Set(key, json, TimeSpan.FromMinutes(5));
-                return json; 
+                cache.Set(key, body, TimeSpan.FromMinutes(5));
+                return body;
             }
-            logger.LogWarning("GraphHopper try {try} failed with {StatusCode}", i + 1, response.StatusCode);
+
+            logger.LogWarning(
+                "GraphHopper try {Try} failed: {StatusCode}. Body: {Body}",
+                i + 1, (int)response.StatusCode, body);
+
             await Task.Delay(250, cancellationToken);
         }
         throw new InvalidOperationException("Routing failed");
